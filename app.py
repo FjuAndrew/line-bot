@@ -6,8 +6,8 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
 app = Flask(__name__)
 
-configuration = Configuration(access_token='Chennel access token')
-handler = WebhookHandler('Channel secret')
+configuration = Configuration(access_token='Chennel_access_token')
+handler = WebhookHandler('Channel_secret')
 
 
 @app.route("/", methods=['POST'])

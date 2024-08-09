@@ -3,14 +3,18 @@ from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, ReplyMessageRequest, TextMessage
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
+import os
+import random
+from linebot.models import *
 
 app = Flask(__name__)
+channel_secret = os.getenv('LINE_CHANNEL_SECRET')
+channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
+configuration = Configuration(access_token=channel_access_token)
+handler = WebhookHandler(channel_secret)
 
-configuration = Configuration(access_token='f4ff46da7257b20d8b6a663ff2557927')
-handler = WebhookHandler('UZ83W/SnkQoLRE3cyBmA4lmjqvr1sWUMr480jsOSwcUvkgYaBS6V7Tr8IrwZEj4iTZyqgx9X/pTUYg9U4Ayai4GdL0cS3umfQprdmWH+kCs4zhzfGItLdYwSHdXGoANpwR8L1V5QKg0nyv2fmjczawdB04t89/1O/w1cDnyilFU=')
 
-
-@app.route("/callback", methods=['POST'])
+@app.route("/", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
     signature = request.headers['X-Line-Signature']
@@ -34,6 +38,19 @@ def handle_message(event):
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
         line_bot_api.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=event.message.text)]))
+
+
+@ handler.add(MessageEvent, message=TextMessage)
+def choose_food(event):
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+    if "吃什麼" in event.message.text:
+        eat = random.choice(['水餃', '小7', '火鍋', '炒飯','拉麵','陽春麵'])
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=eat))
+
+
+
+
 
 if __name__ == "__main__":
     app.run()

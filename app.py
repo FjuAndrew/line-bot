@@ -11,6 +11,10 @@ app = Flask(__name__)
 channel_secret = os.getenv('LINE_CHANNEL_SECRET')
 channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
 
+if not channel_secret or not channel_access_token:
+    raise ValueError("Environment variables for LINE channel secret or access token are not set.")
+
+
 configuration = Configuration(channel_access_token)
 handler = WebhookHandler(channel_secret)
 with ApiClient(configuration) as api_client:
@@ -50,8 +54,8 @@ def handle_message(event):
     if "吃什麼" in event.message.text:
         eat = random.choice(['水餃', '小7', '火鍋', '炒飯','拉麵','陽春麵'])
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=eat))
-
-
+    else:
+        line_bot_api.reply_message(reply_token, TextMessage(text="Sorry, I didn't understand that."))
 
 
 

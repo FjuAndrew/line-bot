@@ -47,7 +47,7 @@ def handle_message(event):
         reply_message = TextSendMessage(text=event.message.text)
         # Send the reply
         line_bot_api.reply_message(
-            reply_token=ev    ent.reply_token,
+            reply_token=event.reply_token,
             messages=[reply_message]
         )
 

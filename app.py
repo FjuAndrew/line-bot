@@ -45,11 +45,12 @@ def callback():
 def handle_message(event):
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
-        line_bot_api.reply_message_with_http_info(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[TextMessage(text=event.message.text)]
-            )
+        # Create the message to send
+        reply_message = TextSendMessage(text=event.message.text)
+        # Send the reply
+        line_bot_api.reply_message(
+            reply_token=event.reply_token,
+            messages=[reply_message]
         )
 
 if __name__ == "__main__":

@@ -17,12 +17,10 @@ if not channel_secret or not channel_access_token:
 
 configuration = Configuration(channel_access_token)
 handler = WebhookHandler(channel_secret)
-with ApiClient(configuration) as api_client:
-    line_bot_api = MessagingApi(api_client)
 
 
 
-@app.route("/", methods=['POST'])
+@app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
     signature = request.headers['X-Line-Signature']
@@ -40,24 +38,17 @@ def callback():
 
     return 'OK'
 
+
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
-
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
         line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
                 reply_token=event.reply_token,
                 messages=[TextMessage(text=event.message.text)]
             )
         )
-@ handler.add(MessageEvent, message=TextMessage)
-def handle_message(event):
-    if "吃什麼" in event.message.text:
-        eat = random.choice(['水餃', '小7', '火鍋', '炒飯','拉麵','陽春麵'])
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=eat))
-    else:
-        line_bot_api.reply_message(reply_token, TextMessage(text="Sorry, I didn't understand that."))
-
-
 
 if __name__ == "__main__":
     app.run()

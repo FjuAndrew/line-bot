@@ -14,9 +14,11 @@ channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
 if not channel_secret or not channel_access_token:
     raise ValueError("Environment variables for LINE channel secret or access token are not set.")
 
-
-configuration = Configuration(channel_access_token)
+configuration = Configuration(access_token=channel_access_token)
 handler = WebhookHandler(channel_secret)
+
+
+
 
 
 

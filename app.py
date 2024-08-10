@@ -13,6 +13,10 @@ channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
 
 configuration = Configuration(channel_access_token)
 handler = WebhookHandler(channel_secret)
+with ApiClient(configuration) as api_client:
+    line_bot_api = MessagingApi(api_client)
+
+
 
 @app.route("/", methods=['POST'])
 def callback():
@@ -34,8 +38,7 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
-    with ApiClient(configuration) as api_client:
-        line_bot_api = MessagingApi(api_client)
+
         line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
                 reply_token=event.reply_token,
@@ -44,11 +47,9 @@ def handle_message(event):
         )
 @ handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    with ApiClient(configuration) as api_client:
-        line_bot_api = MessagingApi(api_client)
-        if "吃什麼" in event.message.text:
-            eat = random.choice(['水餃', '小7', '火鍋', '炒飯','拉麵','陽春麵'])
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=eat))
+    if "吃什麼" in event.message.text:
+        eat = random.choice(['水餃', '小7', '火鍋', '炒飯','拉麵','陽春麵'])
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=eat))
 
 
 

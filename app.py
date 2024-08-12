@@ -7,9 +7,9 @@ import os
 import gunicorn
 app = Flask(__name__)
 
-channel_secret = os.environ('LINE_CHANNEL_SECRET')
-channel_access_token = os.environ('LINE_CHANNEL_ACCESS_TOKEN')
 
+channel_secret = os.getenv('LINE_CHANNEL_SECRET')
+channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
 configuration = Configuration(access_token=channel_access_token)
 handler = WebhookHandler(channel_secret)
 

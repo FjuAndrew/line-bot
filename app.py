@@ -3,11 +3,12 @@ from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, ReplyMessageRequest, TextMessage
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
-
+import os 
+import gunicorn
 app = Flask(__name__)
 
-channel_secret = os.getenv('LINE_CHANNEL_SECRET')
-channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
+channel_secret = os.environ('LINE_CHANNEL_SECRET')
+channel_access_token = os.environ('LINE_CHANNEL_ACCESS_TOKEN')
 
 configuration = Configuration(access_token=channel_access_token)
 handler = WebhookHandler(channel_secret)

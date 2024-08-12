@@ -43,10 +43,10 @@ def handle_message(event):
 @handler.add(MessageEvent, message=TextMessageContent)
 def choose_food(event):
     with ApiClient(configuration) as api_client:
-    line_bot_api = MessagingApi(api_client)
-    if "吃什麼" in event.message.text:
-        eat = random.choice(['水餃', '小7', '火鍋', '炒飯','拉麵','陽春麵'])
-        line_bot_api.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=eat)]))
+        line_bot_api = MessagingApi(api_client)
+        if "吃什麼" in event.message.text:
+            eat = random.choice(['水餃', '小7', '火鍋', '炒飯','拉麵','陽春麵'])
+            line_bot_api.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=eat)]))
 
 if __name__ == "__main__":
     app.run()

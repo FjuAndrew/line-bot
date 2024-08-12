@@ -28,3 +28,5 @@ urllib3==2.2.2
 Werkzeug==3.0.3
 wrapt==1.16.0
 yarl==1.9.4
+pydantic==2.8.2
+pydantic_core==2.20.1

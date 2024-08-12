@@ -28,14 +28,14 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    message = TextSendMessage(text=event.message.text)
-    line_bot_api.reply_message(event.reply_token, message)
-
-@ handler.add(MessageEvent, message=TextMessage)
-def handle_message(event):
     if "吃什麼" in event.message.text:
-        eat = random.choice(['水餃', '小7', '火鍋', '炒飯','拉麵','陽春麵'])
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=eat))
+        eat = random.choice(['水餃', '小7', '火鍋', '炒飯', '拉麵', '陽春麵'])
+        message = TextSendMessage(text=eat)
+    else:
+        # 默认回复消息
+        message = TextSendMessage(text=event.message.text)
+    
+    line_bot_api.reply_message(event.reply_token, message)
 
 
 

@@ -74,7 +74,7 @@ def button_template(event):
         try:
             line_bot_api.reply_message_with_http_info(ReplyMessageRequest(
                 reply_token=event.reply_token,
-                template_message=template_message  # 加上關鍵字參數
+                messages=[template_message] # 加上關鍵字參數
             ))
         except LineBotApiError as e:
             print(f"Error: {e}")

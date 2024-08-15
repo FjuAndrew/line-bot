@@ -40,6 +40,21 @@ def handle_message(event):
         line_bot_api = MessagingApi(api_client)
         if "吃什麼" in event.message.text:
             choose_food(event)
+        elif msg == '!按鈕樣板':
+            buttons_template = ButtonsTemplate(
+                title='按鈕樣板',
+                thumbnail_image_url='https://imgur.com/a/eKV35K4',
+                text='請選擇以下操作',
+                actions=[
+                    MessageAction(label='說哈囉', text='Hello!'),
+                    URIAction(label='前往GOOGLE', uri='https://www.google.com'),
+                    PostbackAction(label='點擊按鈕', data='button_clicked')
+                    # 可以修改為自己想要的actions
+                ]
+            )
+            return TemplateSendMessage(alt_text='按鈕樣板', template=buttons_template)
+
+        
         else:
             line_bot_api.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=event.message.text)]))
 

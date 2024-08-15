@@ -66,7 +66,17 @@ def button_template(event):
                     # 可以修改為自己想要的actions
                 ]
             )
-        return TemplateSendMessage(alt_text='按鈕樣板', template=buttons_template)
+        template_message = TemplateSendMessage(
+            alt_text='按鈕樣板',
+            template=buttons_template
+        )
+        try:
+            line_bot_api.reply_message(
+                event.reply_token,
+                template_message
+            )
+        except LineBotApiError as e:
+            print(f"Error: {e}")
 
 
 if __name__ == "__main__":

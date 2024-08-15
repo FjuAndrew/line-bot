@@ -42,7 +42,20 @@ def handle_message(event):
         if "吃什麼" in event.message.text:
             choose_food(event)
         elif event.message.text == '!按鈕樣板':
-            buttons_template = ButtonsTemplate(
+            button_template(event) 
+        else:
+            line_bot_api.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=event.message.text)]))
+
+def choose_food(event):
+        with ApiClient(configuration) as api_client:
+            line_bot_api = MessagingApi(api_client)
+            eat = random.choice(['八方', '7-11', '滷肉飯', '涼麵','燒臘','賣噹噹'])
+            line_bot_api.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=eat)]))
+
+def button_template(event):
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        buttons_template = ButtonsTemplate(
                 title='按鈕樣板',
                 thumbnail_image_url='https://imgur.com/a/eKV35K4',
                 text='請選擇以下操作',
@@ -53,17 +66,8 @@ def handle_message(event):
                     # 可以修改為自己想要的actions
                 ]
             )
-            return TemplateSendMessage(alt_text='按鈕樣板', template=buttons_template)
+        return TemplateSendMessage(alt_text='按鈕樣板', template=buttons_template)
 
-        
-        else:
-            line_bot_api.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=event.message.text)]))
-
-def choose_food(event):
-        with ApiClient(configuration) as api_client:
-            line_bot_api = MessagingApi(api_client)
-            eat = random.choice(['八方', '7-11', '滷肉飯', '涼麵','燒臘','賣噹噹'])
-            line_bot_api.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=eat)]))
 
 if __name__ == "__main__":
     app.run()

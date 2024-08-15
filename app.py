@@ -72,8 +72,8 @@ def button_template(event):
             template=buttons_template
         )
         try:
-            line_bot_api.reply_message(
-                event.reply_token,
+            line_bot_api.ReplyMessageRequest(
+                reply_token=event.reply_token,
                 template_message
             )
         except LineBotApiError as e:

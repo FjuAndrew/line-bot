@@ -6,6 +6,7 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 import os 
 import gunicorn
 import random
+from linebot.models import PostbackAction,URIAction, MessageAction, TemplateSendMessage, ButtonsTemplate
 app = Flask(__name__)
 
 
@@ -40,7 +41,7 @@ def handle_message(event):
         line_bot_api = MessagingApi(api_client)
         if "吃什麼" in event.message.text:
             choose_food(event)
-        elif msg == '!按鈕樣板':
+        elif event.message.text == '!按鈕樣板':
             buttons_template = ButtonsTemplate(
                 title='按鈕樣板',
                 thumbnail_image_url='https://imgur.com/a/eKV35K4',

@@ -1,10 +1,49 @@
 from flask import Flask, request, abort
 from linebot.v3 import WebhookHandler
-# from linebot import LineBotApi, WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
-from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, ReplyMessageRequest, TextMessage
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
-from linebot.v3.messaging.models import TemplateMessage, ButtonsTemplate, MessageAction,URIAction,PostbackAction
+from linebot.v3.messaging import (
+    Configuration,
+    ApiClient,
+    MessagingApi,
+    MessagingApiBlob,
+    ReplyMessageRequest,
+    PushMessageRequest,
+    MulticastRequest,
+    BroadcastRequest,
+    TextMessage,
+    ApiException,
+    LocationMessage,
+    StickerMessage,
+    ImageMessage,
+    TemplateMessage,
+    FlexMessage,
+    Emoji,
+    QuickReply,
+    QuickReplyItem,
+    ConfirmTemplate,
+    ButtonsTemplate,
+    CarouselTemplate,
+    CarouselColumn,
+    ImageCarouselTemplate,
+    ImageCarouselColumn,
+    FlexBubble,
+    FlexImage,
+    FlexBox,
+    FlexText,
+    FlexIcon,
+    FlexButton,
+    FlexSeparator,
+    FlexContainer,
+    MessageAction,
+    URIAction,
+    PostbackAction,
+    DatetimePickerAction,
+    CameraAction,
+    CameraRollAction,
+    LocationAction,
+    ErrorResponse
+)
 from linebot.exceptions import LineBotApiError
 import os 
 import gunicorn
@@ -70,13 +109,13 @@ def button_template(event):
                     # 可以修改為自己想要的actions
                 ]
             )
-        template_message = TemplateSendMessage(
+        template_message = TemplateMessage(
             alt_text='按鈕樣板',
             template=buttons_template
         )
         try:
             # line_bot_api.reply_message('<REPLY_TOKEN>', template_message)
-            line_bot_apiv3.reply_message_with_http_info(ReplyMessageRequest(
+            line_bot_apiv3.reply_message(ReplyMessageRequest(
                 reply_token=event.reply_token,
                 messages=[template_message] # 加上關鍵字參數
             ))

@@ -100,7 +100,7 @@ def button_template(event):
         line_bot_apiv3 = MessagingApi(api_client)
         buttons_template = ButtonsTemplate(
                 title='按鈕樣板',
-                thumbnail_image_url='https://imgur.com/a/eKV35K4.jpg',
+                thumbnail_image_url='https://i.imgur.com/nwFbufB.jpeg',
                 text='請選擇以下操作',
                 actions=[
                     MessageAction(label='說哈囉', text='Hello!'),

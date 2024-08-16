@@ -4,7 +4,7 @@ from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, ReplyMessageRequest, TextMessage
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
-from linebot.v3.messaging.models import TemplateMessage, ButtonsTemplate, MessageAction
+from linebot.v3.messaging.models import TemplateMessage, ButtonsTemplate, MessageAction,URIAction,PostbackAction
 from linebot.exceptions import LineBotApiError
 import os 
 import gunicorn

@@ -85,6 +85,7 @@ def handle_message(event):
         if "吃什麼" in event.message.text:
             choose_food(event)
         elif '查詢' in event.message.text:
+            user_message = event.message.text
             user_input_for_wiki = user_message.replace("查詢", "").strip()
             button_template(event,user_input_for_wiki) 
         else:

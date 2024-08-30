@@ -87,9 +87,9 @@ def handle_message(event):
             choose_food(event)
         elif '查詢' in event.message.text:
             user_message = event.message.text
-            user_input_for_wiki = user_message.replace("查詢", "").strip()
-            print(user_input_for_wiki)
-            button_template(event,user_input_for_wiki) 
+            user_input_for_search = user_message.replace("查詢", "").strip()
+            print(user_input_for_search)
+            button_template(event,user_input_for_search) 
         else:
             line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=event.message.text)]))
         
@@ -99,18 +99,18 @@ def choose_food(event):
             eat = random.choice(['八方', '7-11', '滷肉飯', '涼麵','燒臘','賣噹噹','摩斯'])
             line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=eat)]))
 
-def button_template(event,user_input_for_wiki):
+def button_template(event,user_input_for_search):
     with ApiClient(configuration) as api_client:
         line_bot_apiv3 = MessagingApi(api_client)
         user_input_for_wiki = urllib.parse.quote(user_input_for_wiki)
         buttons_template = ButtonsTemplate(
-                title='按鈕樣板',
+                title='查詢任意門',
                 thumbnail_image_url='https://i.imgur.com/nwFbufB.jpeg',
-                text='請選擇以下操作',
+                text='請選擇以下連結',
                 actions=[
                     MessageAction(label='說哈囉', text='Hello!'),
-                    URIAction(label='前往GOOGLE', uri='https://www.google.com'),
-                    URIAction(label='維基', uri=f'https://zh.wikipedia.org/wiki/{user_input_for_wiki}'),
+                    URIAction(label='GOOGLE', uri='https://www.google.com/search?q={user_input_for_search}'),
+                    URIAction(label='維基', uri=f'https://zh.wikipedia.org/wiki/{user_input_for_search}'),
                     PostbackAction(label='點擊按鈕', data='button_clicked')
                     # 可以修改為自己想要的actions
                 ]

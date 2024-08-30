@@ -86,18 +86,21 @@ def handle_message(event):
             choose_food(event)
         elif event.message.text == '!按鈕樣板':
             button_template(event) 
+        elif "維基" in event.message.text :
+            user_input_for_wiki = event.message.text
         else:
             line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=event.message.text)]))
-
+        
 def choose_food(event):
         with ApiClient(configuration) as api_client:
             line_bot_apiv3 = MessagingApi(api_client)
-            eat = random.choice(['八方', '7-11', '滷肉飯', '涼麵','燒臘','賣噹噹'])
+            eat = random.choice(['八方', '7-11', '滷肉飯', '涼麵','燒臘','賣噹噹','摩斯'])
             line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=eat)]))
 
 def button_template(event):
     with ApiClient(configuration) as api_client:
         line_bot_apiv3 = MessagingApi(api_client)
+        
         buttons_template = ButtonsTemplate(
                 title='按鈕樣板',
                 thumbnail_image_url='https://i.imgur.com/nwFbufB.jpeg',
@@ -105,6 +108,7 @@ def button_template(event):
                 actions=[
                     MessageAction(label='說哈囉', text='Hello!'),
                     URIAction(label='前往GOOGLE', uri='https://www.google.com'),
+                    URIAction(label='維基', uri='https://zh.wikipedia.org/wiki/'+ (user_input_for_wiki if user_input_for_wiki else '')),
                     PostbackAction(label='點擊按鈕', data='button_clicked')
                     # 可以修改為自己想要的actions
                 ]
@@ -121,6 +125,7 @@ def button_template(event):
             ))
         except LineBotApiError as e:
             print(f"Error: {e}")
+
 
 
 if __name__ == "__main__":

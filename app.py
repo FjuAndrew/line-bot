@@ -87,6 +87,7 @@ def handle_message(event):
         elif '查詢' in event.message.text:
             user_message = event.message.text
             user_input_for_wiki = user_message.replace("查詢", "").strip()
+            print(user_input_for_wiki)
             button_template(event,user_input_for_wiki) 
         else:
             line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=event.message.text)]))
@@ -107,7 +108,7 @@ def button_template(event,user_input_for_wiki):
                 actions=[
                     MessageAction(label='說哈囉', text='Hello!'),
                     URIAction(label='前往GOOGLE', uri='https://www.google.com'),
-                    URIAction(label='維基', uri='https://zh.wikipedia.org/wiki/{user_input_for_wiki}'),
+                    URIAction(label='維基', uri=f'https://zh.wikipedia.org/wiki/{user_input_for_wiki}'),
                     PostbackAction(label='點擊按鈕', data='button_clicked')
                     # 可以修改為自己想要的actions
                 ]

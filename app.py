@@ -109,7 +109,7 @@ def button_template(event,user_input_for_search):
                 text='請選擇以下連結',
                 actions=[
                     MessageAction(label='說哈囉', text='Hello!'),
-                    URIAction(label='GOOGLE', uri='https://www.google.com/search?q={user_input_for_search}'),
+                    URIAction(label='GOOGLE', uri=f'https://www.google.com/search?q={user_input_for_search}'),
                     URIAction(label='維基', uri=f'https://zh.wikipedia.org/wiki/{user_input_for_search}'),
                     PostbackAction(label='點擊按鈕', data='button_clicked')
                     # 可以修改為自己想要的actions

@@ -48,6 +48,7 @@ from linebot.exceptions import LineBotApiError
 import os 
 import gunicorn
 import random
+import urllib.parse
 # from linebot.models import PostbackAction,URIAction, MessageAction, TemplateSendMessage, ButtonsTemplate
 app = Flask(__name__)
 
@@ -101,6 +102,7 @@ def choose_food(event):
 def button_template(event,user_input_for_wiki):
     with ApiClient(configuration) as api_client:
         line_bot_apiv3 = MessagingApi(api_client)
+        user_input_for_wiki = urllib.parse.quote(user_input_for_wiki)
         buttons_template = ButtonsTemplate(
                 title='按鈕樣板',
                 thumbnail_image_url='https://i.imgur.com/nwFbufB.jpeg',

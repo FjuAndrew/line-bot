@@ -102,7 +102,7 @@ def choose_food(event):
 def button_template(event,user_input_for_search):
     with ApiClient(configuration) as api_client:
         line_bot_apiv3 = MessagingApi(api_client)
-        user_input_for_wiki = urllib.parse.quote(user_input_for_wiki)
+        user_input_for_search = urllib.parse.quote(user_input_for_search)
         buttons_template = ButtonsTemplate(
                 title='查詢任意門',
                 thumbnail_image_url='https://i.imgur.com/nwFbufB.jpeg',

@@ -83,6 +83,7 @@ def callback():
 def handle_message(event):
     with ApiClient(configuration) as api_client:
         line_bot_apiv3 = MessagingApi(api_client)
+        print(event)
         if "吃什麼" in event.message.text:
             choose_food(event)
         elif '查詢' in event.message.text:

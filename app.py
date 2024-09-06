@@ -120,7 +120,7 @@ def button_template(event,user_input_for_search):
                     MessageAction(label='說哈囉', text='Hello!'),
                     URIAction(label='GOOGLE', uri=f'https://www.google.com/search?q={user_input_for_search}'),
                     URIAction(label='維基', uri=f'https://zh.wikipedia.org/wiki/{user_input_for_search}'),
-                    URIAction(label='Google Maps', uri=f'https://www.google.com/maps/search/{user_input_for_search}'))
+                    URIAction(label='Google Maps', uri=f'https://www.google.com/maps/search/{user_input_for_search}')
                     # 可以修改為自己想要的actions
                 ]
             )

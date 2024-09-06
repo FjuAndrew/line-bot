@@ -86,6 +86,8 @@ def handle_message(event):
         print(event)
         if "吃什麼" in event.message.text:
             choose_food(event)
+        elif "喝什麼" in event.message.text:
+            choose_drink(event)
         elif '查詢' in event.message.text:
             user_message = event.message.text
             user_input_for_search = user_message.replace("查詢", "").strip()
@@ -99,7 +101,13 @@ def choose_food(event):
             line_bot_apiv3 = MessagingApi(api_client)
             eat = random.choice(['八方', '7-11', '滷肉飯', '涼麵','燒臘','賣噹噹','摩斯'])
             line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=eat)]))
-
+            
+def choose_drink(event):
+        with ApiClient(configuration) as api_client:
+            line_bot_apiv3 = MessagingApi(api_client)
+            eat = random.choice(['可不可','得正','50嵐','鶴茶樓','再睡','一沐日'])
+            line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=eat)]))
+            
 def button_template(event,user_input_for_search):
     with ApiClient(configuration) as api_client:
         line_bot_apiv3 = MessagingApi(api_client)
@@ -112,12 +120,12 @@ def button_template(event,user_input_for_search):
                     MessageAction(label='說哈囉', text='Hello!'),
                     URIAction(label='GOOGLE', uri=f'https://www.google.com/search?q={user_input_for_search}'),
                     URIAction(label='維基', uri=f'https://zh.wikipedia.org/wiki/{user_input_for_search}'),
-                    PostbackAction(label='點擊按鈕', data='button_clicked')
+                    URIAction(label='Google Maps', uri=f'https://www.google.com/maps/search/{user_input_for_search}'))
                     # 可以修改為自己想要的actions
                 ]
             )
         template_message = TemplateMessage(
-            alt_text='按鈕樣板',
+            alt_text='查詢任意門',
             template=buttons_template
         )
         try:

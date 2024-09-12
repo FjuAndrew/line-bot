@@ -60,7 +60,7 @@ configuration = Configuration(access_token=channel_access_token)
 handler = WebhookHandler(channel_secret)
 
 
-@app.route("/health", methods=['HEAD'])
+@app.route("/health", methods=['HEAD', 'GET'])
 def health_check():
     return 'OK', 200
 

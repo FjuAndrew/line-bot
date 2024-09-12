@@ -109,9 +109,8 @@ def choose_food(event):
 def choose_drink(event):
         with ApiClient(configuration) as api_client:
             line_bot_apiv3 = MessagingApi(api_client)
-            eat = random.choice(['可不可','得正','50嵐','鶴茶樓','再睡','一沐日'])
-            line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=eat)]))
-            button_template(event,eat)
+            drink = random.choice(['可不可','得正','50嵐','鶴茶樓','再睡','一沐日'])
+            line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=drink)]))
 def button_template(event,user_input_for_search):
     with ApiClient(configuration) as api_client:
         line_bot_apiv3 = MessagingApi(api_client)

@@ -60,6 +60,10 @@ configuration = Configuration(access_token=channel_access_token)
 handler = WebhookHandler(channel_secret)
 
 
+@app.route("/health", methods=['HEAD'])
+def health_check():
+    return 'OK', 200
+
 @app.route("/", methods=['POST'])
 def callback():
     # get X-Line-Signature header value

@@ -146,7 +146,7 @@ def send_line_message():
             PushMessageRequest(
                 to=event.source.user_id,
                 messages=[TextMessage(text='Hello! Damn SoB')]
-            )
+            ))
             print("測試主動發訊息")
     except Exception as e:
         print(f'Error: {e}')

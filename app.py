@@ -49,6 +49,7 @@ import os
 import gunicorn
 import random
 import urllib.parse
+from DrissionPage import ChromiumPage, ChromiumOptions
 from datetime import datetime
 # from linebot.models import PostbackAction,URIAction, MessageAction, TemplateSendMessage, ButtonsTemplate
 app = Flask(__name__)
@@ -98,6 +99,8 @@ def handle_message(event):
             user_input_for_search = user_message.replace("查詢", "").strip()
             print(user_input_for_search)
             button_template(event,user_input_for_search) 
+        elif '匯率' in event.message.text:
+            search_exchange(event)
         else:
             line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=event.message.text)]))
         
@@ -112,6 +115,21 @@ def choose_drink(event):
             line_bot_apiv3 = MessagingApi(api_client)
             drink = random.choice(['可不可','得正','50嵐','鶴茶樓','再睡','一沐日'])
             line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=drink)]))
+
+def search_exchange(event):
+        with ApiClient(configuration) as api_client:
+            line_bot_apiv3 = MessagingApi(api_client)
+            page = ChromiumPage()
+            page.get("https://accessibility.cathaybk.com.tw/exchange-rate-search.aspx")
+            ele =page.eles(".td")
+            exchange= []
+
+            for i in range(15):
+                exchange.append(ele[i].text)
+            grouped_data = [exchange[i:i + 3] for i in range(0, len(exchange), 3)]
+            formatted_message = "\n".join([" | ".join(group) for group in grouped_data])
+            line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=formatted_message)]))
+
 def button_template(event,user_input_for_search):
     with ApiClient(configuration) as api_client:
         line_bot_apiv3 = MessagingApi(api_client)

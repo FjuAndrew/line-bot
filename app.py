@@ -185,16 +185,18 @@ def button_template(event,user_input_for_search):
             ))
         except LineBotApiError as e:
             print(f"Error: {e}")
-def send_line_message():
-    try:
-        line_bot_apiv3.push_message(
-            PushMessageRequest(
-                to=event.source.user_id,
-                messages=[TextMessage(text='Hello! Damn SoB')]
-            ))
-        print("測試主動發訊息")
-    except Exception as e:
-        print(f'Error: {e}')
+def send_line_message():    
+    with ApiClient(configuration) as api_client:
+        line_bot_apiv3 = MessagingApi(api_client)
+        try:
+            line_bot_apiv3.push_message(
+                PushMessageRequest(
+                    to=event.source.user_id,
+                    messages=[TextMessage(text='Hello! Damn SoB')]
+                ))
+            print("測試主動發訊息")
+        except Exception as e:
+            print(f'Error: {e}')
         
 def check_time():
     while True:

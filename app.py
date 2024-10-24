@@ -149,7 +149,8 @@ def search_exchange(event):
             else:
                 print(f'請求失敗，狀態碼：{response.status_code}')
                 formatted_message = "爬取失敗"
-            line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=formatted_message)]))
+            #line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=formatted_message)]))
+            line_bot_apiv3.push_message(event.source.user_id, TextSendMessage(text=formatted_message))
 
 def button_template(event,user_input_for_search):
     with ApiClient(configuration) as api_client:

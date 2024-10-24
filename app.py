@@ -53,6 +53,7 @@ from DrissionPage import ChromiumPage, ChromiumOptions
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+import time
 # from linebot.models import PostbackAction,URIAction, MessageAction, TemplateSendMessage, ButtonsTemplate
 app = Flask(__name__)
 
@@ -199,6 +200,7 @@ def send_line_message():
             print(f'Error: {e}')
         
 def check_time():
+    print("check_time 函數已啟動")
     while True:
         now = datetime.now()
         if  now.second == 10:  # 每小時整點

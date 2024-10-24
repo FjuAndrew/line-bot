@@ -54,6 +54,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import time
+from threading import Thread
 # from linebot.models import PostbackAction,URIAction, MessageAction, TemplateSendMessage, ButtonsTemplate
 app = Flask(__name__)
 

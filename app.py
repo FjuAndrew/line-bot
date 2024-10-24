@@ -151,7 +151,24 @@ def search_exchange(event):
                                     exchange.append(titles[j].get_text())
                                     print(f"已加入{titles[j].get_text()}")
                     grouped_data = [exchange[i:i + 3] for i in range(0, len(exchange), 3)]
-                    formatted_message = "\n".join([" | ".join(group) for group in grouped_data])
+                    #---------------------------新增測試---------------------------------
+                    today = datetime.now().strftime('%Y-%m-%d')
+                    
+                    # 自行添加的文字訊息
+                    additional_info = f"今日匯率信息\n日期: {today}\n\n"
+                    
+                    # 格式化
+                    header = f"{'貨幣':<20} {'買入匯率':<12} {'賣出匯率':<12}"
+                    formatted_rates = [header]  
+                    
+                    for currency, buy, sell in grouped_data:
+                        formatted_rates.append(f"{currency:<20} {buy:<12} {sell:<12}")
+                    
+                    # 合併
+                    formatted_message = additional_info + "\n".join(formatted_rates)
+                    #--------------------------------------------------------------------------
+                
+                   # formatted_message = "\n".join([" | ".join(group) for group in grouped_data])
                 except Exception as e:
                     print(f"發生錯誤:{e}")
             else:

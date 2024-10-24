@@ -50,6 +50,8 @@ import gunicorn
 import random
 import urllib.parse
 from DrissionPage import ChromiumPage, ChromiumOptions
+import requests
+from bs4 import BeautifulSoup
 from datetime import datetime
 # from linebot.models import PostbackAction,URIAction, MessageAction, TemplateSendMessage, ButtonsTemplate
 app = Flask(__name__)
@@ -119,17 +121,34 @@ def choose_drink(event):
 def search_exchange(event):
         with ApiClient(configuration) as api_client:
             line_bot_apiv3 = MessagingApi(api_client)
-            #無頭模式
-            co = ChromiumOptions().headless()
-            page = ChromiumPage(co)
-            page.get("https://accessibility.cathaybk.com.tw/exchange-rate-search.aspx")
-            ele =page.eles(".td")
+            line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text="爬取中，請稍後")]))
+            url = 'https://accessibility.cathaybk.com.tw/exchange-rate-search.aspx' 
+            response = requests.get(url)
             exchange= []
-
-            for i in range(15):
-                exchange.append(ele[i].text)
-            grouped_data = [exchange[i:i + 3] for i in range(0, len(exchange), 3)]
-            formatted_message = "\n".join([" | ".join(group) for group in grouped_data])
+            keywords=["日圓","美元","人民幣","歐元"]
+            # 2. 檢查請求是否成功
+            if response.status_code == 200:
+                # 3. 使用 BeautifulSoup 解析網頁內容
+                soup = BeautifulSoup(response.text, 'html.parser')
+                # 4. 提取所需的數據
+                titles = soup.find_all('td')
+                try:
+                    for i in range(0, len(titles), 3):
+                        # 確保不超出範圍
+                        if i < len(titles):
+                            text = titles[i].get_text()
+                            if any(keyword in text for keyword in keywords):  # 檢查是否有關鍵字匹配
+                                # 如果匹配，加入當前標題和後面兩個標題
+                                for j in range(i, min(i + 3, len(titles))):
+                                    exchange.append(titles[j].get_text())
+                                    print(f"已加入{titles[j].get_text()}")
+                    grouped_data = [exchange[i:i + 3] for i in range(0, len(exchange), 3)]
+                    formatted_message = "\n".join([" | ".join(group) for group in grouped_data])
+                except Exception as e:
+                    print(f"發生錯誤:{e}")
+            else:
+                print(f'請求失敗，狀態碼：{response.status_code}')
+                formatted_message = "爬取失敗"
             line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=formatted_message)]))
 
 def button_template(event,user_input_for_search):

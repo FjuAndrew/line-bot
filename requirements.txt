@@ -5,11 +5,13 @@ annotated-types==0.7.0
 APScheduler==3.10.4
 attrs==24.2.0
 blinker==1.8.2
+beautifulsoup4==4.12.2
 certifi==2024.7.4
 charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.6
 Deprecated==1.2.14
+DrissionPage==4.1.0.9
 Flask==3.0.3
 frozenlist==1.4.1
 future==1.0.0
@@ -31,4 +33,4 @@ wrapt==1.16.0
 yarl==1.9.4
 pydantic==2.8.2
 pydantic_core==2.20.1
-DrissionPage==4.1.0.9
+

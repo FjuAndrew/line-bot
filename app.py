@@ -205,6 +205,7 @@ def check_time():
             send_line_message()
             time.sleep(60)  # 等待 60 秒，以避免重複發送
         time.sleep(1)  # 每秒檢查一次
+        print("檢查中")
 
 if __name__ == "__main__":
     check_time()

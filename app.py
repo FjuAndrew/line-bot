@@ -68,6 +68,7 @@ handler = WebhookHandler(channel_secret)
 
 @app.route("/health", methods=['HEAD', 'GET'])
 def health_check():
+    send_line_message()
     return 'OK', 200
 
 @app.route("/", methods=['POST'])

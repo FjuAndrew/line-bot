@@ -210,5 +210,8 @@ def check_time():
         print("檢查中")
 
 if __name__ == "__main__":
-    check_time()
+    check_time_thread = Thread(target=check_time)
+    check_time_thread.daemon = True  # 設置為守護線程
+    check_time_thread.start()
+    
     app.run()

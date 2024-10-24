@@ -68,7 +68,12 @@ handler = WebhookHandler(channel_secret)
 
 @app.route("/health", methods=['HEAD', 'GET'])
 def health_check():
-    send_line_message()
+    now = datetime.now()
+    target_hour = 17  # 指定小时
+
+    if now.hour == target_hour and now.minute == target_minute:
+        send_line_message()
+        time.sleep(3600) 
     return 'OK', 200
 
 @app.route("/", methods=['POST'])

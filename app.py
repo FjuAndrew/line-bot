@@ -119,7 +119,9 @@ def choose_drink(event):
 def search_exchange(event):
         with ApiClient(configuration) as api_client:
             line_bot_apiv3 = MessagingApi(api_client)
-            page = ChromiumPage()
+            #無頭模式
+            co = ChromiumOptions().headless()
+            page = ChromiumPage(co)
             page.get("https://accessibility.cathaybk.com.tw/exchange-rate-search.aspx")
             ele =page.eles(".td")
             exchange= []

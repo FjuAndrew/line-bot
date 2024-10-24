@@ -191,9 +191,10 @@ def send_line_message():
     with ApiClient(configuration) as api_client:
         line_bot_apiv3 = MessagingApi(api_client)
         try:
+            user_id = 'Uffd67f5430e7b403887d0c8f0701ea14'
             line_bot_apiv3.push_message(
                 PushMessageRequest(
-                    to=event.source.user_id,
+                    to=user_id,
                     messages=[TextMessage(text='Hello! Damn SoB')]
                 ))
             print("測試主動發訊息")

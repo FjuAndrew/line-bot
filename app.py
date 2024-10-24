@@ -54,7 +54,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import time
-from threading import Thread
+from apscheduler.schedulers.background import BackgroundScheduler
 # from linebot.models import PostbackAction,URIAction, MessageAction, TemplateSendMessage, ButtonsTemplate
 app = Flask(__name__)
 
@@ -200,19 +200,12 @@ def send_line_message():
         except Exception as e:
             print(f'Error: {e}')
         
-def check_time():
-    print("check_time 函數已啟動")
-    while True:
-        now = datetime.now()
-        if  now.second == 10:  # 每小時整點
-            send_line_message()
-            time.sleep(60)  # 等待 60 秒，以避免重複發送
-        time.sleep(1)  # 每秒檢查一次
-        print("檢查中")
 
 if __name__ == "__main__":
-    check_time_thread = Thread(target=check_time)
-    check_time_thread.daemon = True  # 設置為守護線程
-    check_time_thread.start()
+    # 初始化调度器
+    scheduler = BackgroundScheduler()
+    # 每天在特定时间发送消息，例如每天的 10:00 AM
+    scheduler.add_job(send_line_message, 'cron', minute=0)
+    scheduler.start()
     
     app.run()

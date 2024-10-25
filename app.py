@@ -75,8 +75,8 @@ def health_check():
     target_hour = 10  # 指定小时
     print(now.hour)
     
-    if now.hour == target_hour and 10<= now.minute <=19:
-        print(f"現在時間為{now.hour}")
+    # if now.hour == target_hour and 10<= now.minute <=19:
+    if 10<= now.minute <=30:
         send_line_message()
     return 'OK', 200
 

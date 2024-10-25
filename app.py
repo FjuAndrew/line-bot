@@ -54,6 +54,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import time
+import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 # from linebot.models import PostbackAction,URIAction, MessageAction, TemplateSendMessage, ButtonsTemplate
 app = Flask(__name__)
@@ -69,7 +70,8 @@ handler = WebhookHandler(channel_secret)
 
 @app.route("/health", methods=['HEAD', 'GET'])
 def health_check():
-    now = datetime.now()
+    timezone = pytz.timezone('Asia/Taiepi')
+    now = datetime.now(timezone)
     target_hour = 10  # 指定小时
     print(now.hour)
     

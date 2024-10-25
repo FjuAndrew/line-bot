@@ -61,6 +61,7 @@ app = Flask(__name__)
 
 channel_secret = os.getenv('LINE_CHANNEL_SECRET')
 channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
+user_id = os.getenv('USER_ID')
 configuration = Configuration(access_token=channel_access_token)
 #line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
@@ -217,7 +218,6 @@ def send_line_message():
     with ApiClient(configuration) as api_client:
         line_bot_apiv3 = MessagingApi(api_client)
         try:
-            user_id = 'Uffd67f5430e7b403887d0c8f0701ea14'
             line_bot_apiv3.push_message(
                 PushMessageRequest(
                     to=user_id,

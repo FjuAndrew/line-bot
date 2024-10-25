@@ -71,8 +71,9 @@ handler = WebhookHandler(channel_secret)
 def health_check():
     now = datetime.now()
     target_hour = 18  # 指定小时
-
+    
     if now.hour == target_hour:
+        print(f"現在時間為{now.hour}")
         send_line_message()
         time.sleep(3600) 
     return 'OK', 200

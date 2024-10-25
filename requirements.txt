@@ -33,4 +33,5 @@ wrapt==1.16.0
 yarl==1.9.4
 pydantic==2.8.2
 pydantic_core==2.20.1
+pytz==2022.7.1
 

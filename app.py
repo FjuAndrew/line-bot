@@ -163,7 +163,7 @@ def search_exchange(event):
                     formatted_rates = []
                     
                     for currency, buy, sell in grouped_data:
-                        formatted_rates.append(f"{currency}\n買入: {buy}\n賣出: {sell}")
+                        formatted_rates.append(f"{currency}\n買入: {buy}\n賣出: {sell}\n")
                     
                     # 合併
                     formatted_message = additional_info + "\n".join(formatted_rates)

@@ -159,19 +159,15 @@ def search_exchange(event):
                     # 自行添加的文字訊息
                     additional_info = f"今日匯率信息\n日期: {today}\n\n"
                     
-                    currency_width = max(len(currency) for currency, _, _ in grouped_data) + 2  # 增加额外的空格
-                    rate_width = 12  # 汇率列宽
-                    
-                    # 格式化汇率信息
-                    header = f"{'貨幣':<{currency_width}} {'買入匯率':<{rate_width}} {'賣出匯率':<{rate_width}}"
-                    formatted_rates = [header]  # 添加表头
+                    # 格式化匯率信息
+                    formatted_rates = []
                     
                     for currency, buy, sell in grouped_data:
-                        formatted_rates.append(f"{currency:<{currency_width}} {buy:<{rate_width}} {sell:<{rate_width}}")
+                        formatted_rates.append(f"{currency}\n買入: {buy}\n賣出: {sell}")
                     
                     # 合併
                     formatted_message = additional_info + "\n".join(formatted_rates)
-                    #--------------------------------------------------------------------------
+                    #----------------------------------------------------------------------
                 
                    # formatted_message = "\n".join([" | ".join(group) for group in grouped_data])
                 except Exception as e:

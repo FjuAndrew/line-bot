@@ -158,7 +158,7 @@ def search_exchange(event):
                     # 自行添加的文字訊息
                     additional_info = f"今日匯率信息\n日期: {today}\n\n"
                     
-                    currency_width = max(len(currency) for currency, _, _ in exchange_rates) + 2  # 增加额外的空格
+                    currency_width = max(len(currency) for currency, _, _ in grouped_data) + 2  # 增加额外的空格
                     rate_width = 12  # 汇率列宽
                     
                     # 格式化汇率信息

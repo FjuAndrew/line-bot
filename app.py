@@ -71,6 +71,7 @@ handler = WebhookHandler(channel_secret)
 def health_check():
     now = datetime.now()
     target_hour = 10  # 指定小时
+    print(now.hour)
     
     if now.hour == target_hour and 10<= now.minute <=19:
         print(f"現在時間為{now.hour}")

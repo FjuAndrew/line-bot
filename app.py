@@ -70,7 +70,7 @@ handler = WebhookHandler(channel_secret)
 
 @app.route("/health", methods=['HEAD', 'GET'])
 def health_check():
-    timezone = pytz.timezone('Asia/Taiepi')
+    timezone = pytz.timezone('Asia/Taipei')
     now = datetime.now(timezone)
     target_hour = 10  # 指定小时
     print(now.hour)
@@ -228,10 +228,4 @@ def send_line_message():
         
 
 if __name__ == "__main__":
-    # 初始化调度器
-    scheduler = BackgroundScheduler()
-    # 每天在特定时间发送消息，例如每天的 10:00 AM
-    scheduler.add_job(send_line_message, 'cron', minute=0)
-    scheduler.start()
-    
     app.run()

@@ -112,7 +112,7 @@ def send_message():
     try:
         # 使用 ApiClient 發送訊息
         with ApiClient(configuration) as api_client:
-            line_bot_apiv3 = LineBotApi(api_client)
+            line_bot_apiv3 = MessagingApi(api_client)
 
             # 構建推播訊息
             push_message_request = PushMessageRequest(

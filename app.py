@@ -97,7 +97,7 @@ def callback():
 
     return 'OK'
     
-@app.route('/send_message', methods=['POST'])
+@app.route('/send_message', methods=['POST', 'GET'])
 def send_message():
     # 取得傳來的 JSON 請求資料
     data = request.json

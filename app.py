@@ -96,7 +96,37 @@ def callback():
         abort(400)
 
     return 'OK'
+    
+@app.route('/send_message', methods=['POST'])
+def send_message():
+    # 取得傳來的 JSON 請求資料
+    data = request.json
 
+    # 確保請求中包含 user_id 和 message
+    if 'user_id' not in data or 'message' not in data:
+        return jsonify({'error': 'user_id and message are required'}), 400
+
+    user_id = data['user_id']
+    message = data['message']
+
+    try:
+        # 使用 ApiClient 發送訊息
+        with ApiClient(configuration) as api_client:
+            line_bot_apiv3 = LineBotApi(api_client)
+
+            # 構建推播訊息
+            push_message_request = PushMessageRequest(
+                to=user_id,
+                messages=[TextMessage(text=message)]
+            )
+
+            # 發送訊息
+            line_bot_apiv3.push_message(push_message_request)
+            return jsonify({'status': 'success', 'message': 'Message sent successfully!'}), 200
+
+    except LineBotApiError as e:
+        # 發生錯誤時的處理
+        return jsonify({'error': f'Failed to send message: {e.status_code} - {e.error.message}'}), 500
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
@@ -126,7 +156,7 @@ def choose_food(event):
 def choose_drink(event):
         with ApiClient(configuration) as api_client:
             line_bot_apiv3 = MessagingApi(api_client)
-            drink = random.choice(['可不可','得正','50嵐','鶴茶樓','再睡','一沐日'])
+            drink = random.choice(['可不可','得正','50嵐','鶴茶樓','再睡','一沐日','青山'])
             line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=drink)]))
 
 def search_exchange(event):
@@ -221,7 +251,7 @@ def send_line_message():
                     to=user_id,
                     messages=[TextMessage(text='Hello! Damn SoB')]
                 ))
-            print("測試主動發訊息")
+            print("已發出訊息")
         except Exception as e:
             print(f'Error: {e}')
         

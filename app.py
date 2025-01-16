@@ -46,6 +46,7 @@ from linebot.v3.messaging import (
 )
 from linebot.exceptions import LineBotApiError
 import os 
+import json
 import gunicorn
 import random
 import urllib.parse
@@ -67,6 +68,37 @@ configuration = Configuration(access_token=channel_access_token)
 #line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
+SECRET_FILES_PATH = "/etc/secrets"
+JSON_FILE_PATH = os.path.join(SECRET_FILES_PATH, "user_ids.json")
+
+def initialize_json_file():
+    """初始化 Secret JSON 文件（如果不存在則創建）"""
+    if not os.path.exists(JSON_FILE_PATH):
+        with open(JSON_FILE_PATH, "w") as f:
+            json.dump({"user_ids": []}, f)
+            print(f"Created new JSON file at {JSON_FILE_PATH}")
+    else:
+        print(f"JSON file already exists at {JSON_FILE_PATH}")
+
+def add_user_id_to_json(user_id):
+    """添加新的 user_id 到 Secret JSON 文件"""
+    initialize_json_file()
+    with open(JSON_FILE_PATH, "r") as f:
+        data = json.load(f)
+
+    if user_id not in data["user_ids"]:
+        data["user_ids"].append(user_id)
+        print(f"User ID {user_id} added to JSON file.")
+
+    with open(JSON_FILE_PATH, "w") as f:
+        json.dump(data, f, indent=4)
+
+def get_all_user_ids():
+    """讀取 Secret JSON 文件中的所有 user_id"""
+    initialize_json_file()
+    with open(JSON_FILE_PATH, "r") as f:
+        data = json.load(f)
+    return data["user_ids"]
 
 @app.route("/health", methods=['HEAD', 'GET'])
 def health_check():

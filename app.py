@@ -135,8 +135,8 @@ def health_check():
 @app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
-    signature = request.headers['X-Line-Signature', 'FAKE_SIGNATURE_FOR_TESTING'] #正式版需拿掉
-
+    #signature = request.headers['X-Line-Signature'] #正式版
+    signature = request.headers.get('X-Line-Signature', 'FAKE_SIGNATURE_FOR_TESTING') #測試用
     # get request body as text
     body = request.get_data(as_text=True)
     app.logger.info("Request body: " + body)

@@ -133,6 +133,12 @@ def handle_message(event):
     with ApiClient(configuration) as api_client:
         line_bot_apiv3 = MessagingApi(api_client)
         print(event)
+        source_type = event.source.type  # 可能是 "user" 或 "group"
+        if source_type == "group":
+            group_id = event.source.group_id
+            print(f"Group ID: {group_id}")
+            # 可以將 group_id 保存到資料庫或文件中 
+        
         if "吃什麼" in event.message.text:
             choose_food(event)
         elif "喝什麼" in event.message.text:
@@ -254,14 +260,7 @@ def send_line_message():
             print("已發出訊息")
         except Exception as e:
             print(f'Error: {e}')
-            
-@handler.add(event="message")
-def handle_message(event):
-    source_type = event.source.type  # 可能是 "user" 或 "group"
-    if source_type == "group":
-        group_id = event.source.group_id
-        print(f"Group ID: {group_id}")
-        # 可以將 group_id 保存到資料庫或文件中        
+              
 
 if __name__ == "__main__":
     app.run()

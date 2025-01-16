@@ -152,7 +152,8 @@ def callback():
 @handler.add(FollowEvent)
 def handle_follow(event):
     user_id = event.source.user_id
-    add_user_id_to_json(user_id)
+    print(user_id)
+    #add_user_id_to_json(user_id)
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
         line_bot_api.reply_message(

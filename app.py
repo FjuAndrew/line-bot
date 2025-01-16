@@ -128,7 +128,12 @@ def callback():
         abort(400)
 
     return 'OK'
-    
+@handler.add(event="follow")
+def handle_follow(event):
+    user_id = event.source.user_id
+    add_user_id_to_json(user_id)
+    line_bot_api.push_message(user_id, TextMessage(text="感謝您加入好友！"))
+
 @app.route('/send_message', methods=['POST', 'GET'])
 def send_message():
     # 取得傳來的 JSON 請求資料

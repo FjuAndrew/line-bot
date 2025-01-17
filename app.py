@@ -76,6 +76,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import time
+import re
 import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 # from linebot.models import PostbackAction,URIAction, MessageAction, TemplateSendMessage, ButtonsTemplate
@@ -205,9 +206,9 @@ def handle_message(event):
             print(f"Group ID: {group_id}")
             # 可以將 group_id 保存到資料庫或文件中 
         
-        if "吃什麼" in event.message.text:
+        if re.search(r"吃.*麼|吃啥", event.message.text):
             choose_food(event)
-        elif "喝什麼" in event.message.text:
+        elif re.search(r"喝.*麼|喝啥", event.message.text):
             choose_drink(event) 
         elif '查詢' in event.message.text:
             user_message = event.message.text

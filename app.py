@@ -1,4 +1,4 @@
-from flask import Flask, request, abort, jsonify
+from flask import Flask, request, abort, jsonify, redirect
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import (
@@ -362,15 +362,58 @@ def test_template(event):
             
         except LineBotApiError as e:
             print(f"Error: {e}")         
-            
+
+@app.route('/track_and_redirect')
+def track_and_redirect():
+    # 獲取用戶的資訊（例如 user_id）
+    user_id = request.args.get('user_id')
+    print(user_id)
+    # 記錄用戶的點擊行為
+    logger.info(f"User {user_id} clicked on the '開啟 Google' button.")
+
+    # 重定向到最終目標 URL（Google）
+    return redirect('https://www.google.com')
+    
+def send_button_template(event):
+    with ApiClient(configuration) as api_client:
+        line_bot_apiv3 = MessagingApi(api_client)
+        # 中介 URL，記錄點擊事件後重定向
+        tracking_url = f'https://line-bot-fi4w.onrender.com/track_and_redirect?user_id={event.source.user_id}'
+    
+        # 設定按鈕模板
+        buttons_template = ButtonsTemplate(
+            title='查詢 Google',
+            text='點擊下方按鈕開啟 Google',
+            actions=[
+                URIAction(label='開啟 Google', uri=tracking_url)  # 用戶點擊後會先跳轉到中介 URL
+            ]
+        )
+    
+        template_message = TemplateMessage(
+            alt_text='查詢 Google',
+            template=buttons_template
+        )
+    
+        # 發送模板訊息
+        line_bot_apiv3.reply_message(ReplyMessageRequest(
+            reply_token=event.reply_token,
+            messages=[template_message]  # 加上關鍵字參數
+        ))
+    
+
+
 @handler.add(PostbackEvent)
 def handle_postback(event):
     with ApiClient(configuration) as api_client:
         line_bot_apiv3 = MessagingApi(api_client)
-        # 取得 postback 資料
+        
         data = event.postback.data
+        user_id = event.source.user_id  # 用戶 ID
+        timestamp = event.timestamp  # 事件的時間戳
+        print(timestamp)
+        logger.info(f"Received postback from user {user_id}. Data: {data} Timestamp: {timestamp}")
+
         if data == 'open_google':
-            # 這裡我們選擇開啟 google.com
             url = 'https://www.google.com'
             line_bot_apiv3.reply_message(ReplyMessageRequest(
                 reply_token=event.reply_token,

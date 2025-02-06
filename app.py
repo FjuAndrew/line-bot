@@ -217,6 +217,8 @@ def handle_message(event):
             button_template(event,user_input_for_search) 
         elif '測試' in event.message.text:
             test_template(event)
+        elif '測試2' in event.message.text:
+            send_button_template(event)
         elif '匯率' in event.message.text:
             search_exchange(event)
         else:
@@ -411,7 +413,6 @@ def handle_postback(event):
         user_id = event.source.user_id  # 用戶 ID
         timestamp = event.timestamp  # 事件的時間戳
         print(timestamp)
-        logger.info(f"Received postback from user {user_id}. Data: {data} Timestamp: {timestamp}")
 
         if data == 'open_google':
             url = 'https://www.google.com'

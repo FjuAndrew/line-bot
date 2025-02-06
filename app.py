@@ -216,7 +216,7 @@ def handle_message(event):
             print(user_input_for_search)
             button_template(event,user_input_for_search) 
         elif '測試' in event.message.text:
-            test_template()
+            test_template(event)
         elif '匯率' in event.message.text:
             search_exchange(event)
         else:
@@ -359,6 +359,7 @@ def test_template(event):
                 reply_token=event.reply_token,
                 messages=[template_message]  # 加上關鍵字參數
             ))
+            
         except LineBotApiError as e:
             print(f"Error: {e}")         
             

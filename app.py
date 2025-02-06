@@ -372,14 +372,14 @@ def handle_postback(event):
         if data == 'open_google':
             # 這裡我們選擇開啟 google.com
             url = 'https://www.google.com'
-            line_bot_apiv3.reply_message(
+            line_bot_apiv3.reply_message(ReplyMessageRequest(
                 event.reply_token,
                 TextMessage(text=f'您選擇了開啟 Google: {url}')
-            )
+            ))
         else:
-            line_bot_apiv3.reply_message(
+            line_bot_apiv3.reply_message(ReplyMessageRequest(
                 event.reply_token,
                 TextMessage(text="無法處理的操作")
-            )
+            ))
 if __name__ == "__main__":
     app.run()

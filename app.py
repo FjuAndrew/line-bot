@@ -217,7 +217,7 @@ def handle_message(event):
             button_template(event,user_input_for_search) 
         elif '測試' in event.message.text:
             test_template(event)
-        elif '測試2' in event.message.text:
+        elif '中介' in event.message.text:
             send_button_template(event)
         elif '匯率' in event.message.text:
             search_exchange(event)

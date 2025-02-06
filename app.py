@@ -215,6 +215,8 @@ def handle_message(event):
             user_input_for_search = user_message.replace("查詢", "").strip()
             print(user_input_for_search)
             button_template(event,user_input_for_search) 
+        elif '測試' in event.message.text:
+            log_click()
         elif '匯率' in event.message.text:
             search_exchange(event)
         else:
@@ -327,7 +329,54 @@ def send_line_message():
             print("已發出訊息")
         except Exception as e:
             print(f'Error: {e}')
-              
 
+#2025/02/06新增
+
+def test_template(event):
+    # 初始化 LineBot API 客戶端
+    with ApiClient(configuration) as api_client:
+        line_bot_apiv3 = MessagingApi(api_client)
+
+        # 定義按鈕模板
+        buttons_template = ButtonsTemplate(
+            title='查詢任意門',
+            thumbnail_image_url='https://i.imgur.com/nwFbufB.jpeg',
+            text='請選擇以下操作',
+            actions=[
+                PostbackAction(label='開啟 Google', data='open_google')  # 這裡我們設置 postback 資料
+            ]
+        )
+
+        # 設定模板訊息
+        template_message = TemplateMessage(
+            alt_text='查詢任意門',
+            template=buttons_template
+        )
+
+        try:
+            # 發送模板訊息到用戶
+            line_bot_apiv3.reply_message(ReplyMessageRequest(
+                reply_token=event.reply_token,
+                messages=[template_message]  # 加上關鍵字參數
+            ))
+        except LineBotApiError as e:
+            print(f"Error: {e}")         
+            
+@handler.add(PostbackEvent)
+def handle_postback(event):
+    # 取得 postback 資料
+    data = event.postback.data
+    if data == 'open_google':
+        # 這裡我們選擇開啟 google.com
+        url = 'https://www.google.com'
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextMessage(text=f'您選擇了開啟 Google: {url}')
+        )
+    else:
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextMessage(text="無法處理的操作")
+        )
 if __name__ == "__main__":
     app.run()

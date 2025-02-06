@@ -365,13 +365,12 @@ def test_template(event):
         except LineBotApiError as e:
             print(f"Error: {e}")         
 
-@app.route('/track_and_redirect')
+@app.route('/track_and_redirect', methods=['POST', 'GET'])
 def track_and_redirect():
     # 獲取用戶的資訊（例如 user_id）
     user_id = request.args.get('user_id')
-    print(user_id)
+    print(f"{user_id}點擊了按鈕!")
     # 記錄用戶的點擊行為
-    logger.info(f"User {user_id} clicked on the '開啟 Google' button.")
 
     # 重定向到最終目標 URL（Google）
     return redirect('https://www.google.com')

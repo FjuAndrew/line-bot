@@ -241,7 +241,7 @@ def choose_drink(event):
 def listenbao(event):
         with ApiClient(configuration) as api_client:
             line_bot_apiv3 = MessagingApi(api_client)
-            drink = random.choice(['動作快點','愛哥哥','哥哥晚安','哥哥早安','我要睡覺','來陪我','快去讀書','拖拖拉拉','波波調皮','噗咕乖乖','玩Bumble','寶是公主寶說的算'])
+            drink = random.choice(['動作快點','愛哥哥','哥哥晚安','哥哥早安','我要睡覺','來陪我','快去讀書','拖拖拉拉','波波調皮','噗咕乖乖','玩Bumble','寶是公主寶說的算','我是不是變胖了','我的腿是不是變粗了','呆瓜哥哥','你還想在這邊跟我聊天喔','討厭哥哥','哥哥是小豬'])
             line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=drink)]))
             
 def search_exchange(event):

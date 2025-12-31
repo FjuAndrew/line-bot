@@ -221,21 +221,29 @@ def handle_message(event):
             send_button_template(event)
         elif '匯率' in event.message.text:
             search_exchange(event)
+        elif '聽寶的' in event.message.text:
+            listenbao(event)
         else:
             line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=event.message.text)]))
         
 def choose_food(event):
         with ApiClient(configuration) as api_client:
             line_bot_apiv3 = MessagingApi(api_client)
-            eat = random.choice(['八方', '7-11', '滷肉飯', '涼麵','燒臘','麥噹噹','摩斯','拉麵','咖哩飯'])
+            eat = random.choice(['八方', '7-11', '滷肉飯', '涼麵','牛肉麵','麥噹噹','摩斯','拉麵','咖哩飯','粥','秀秀早餐','聽寶的'])
             line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=eat)]))
             
 def choose_drink(event):
         with ApiClient(configuration) as api_client:
             line_bot_apiv3 = MessagingApi(api_client)
-            drink = random.choice(['可不可','得正','50嵐','鶴茶樓','再睡','一沐日','青山'])
+            drink = random.choice(['可不可','得正','50嵐','鶴茶樓','再睡','一沐日','青山','UG','壽奶茶','迷客夏','COCO','聽寶的'])
             line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=drink)]))
 
+def listenbao(event):
+        with ApiClient(configuration) as api_client:
+            line_bot_apiv3 = MessagingApi(api_client)
+            drink = random.choice(['動作快點','愛哥哥','哥哥晚安','哥哥早安','我要睡覺','來陪我','快去讀書','拖拖拉拉','波波調皮','噗咕乖乖','玩Bumble','寶是公主寶說的算'])
+            line_bot_apiv3.reply_message_with_http_info( ReplyMessageRequest( reply_token=event.reply_token, messages=[TextMessage(text=drink)]))
+            
 def search_exchange(event):
         with ApiClient(configuration) as api_client:
             line_bot_apiv3 = MessagingApi(api_client)

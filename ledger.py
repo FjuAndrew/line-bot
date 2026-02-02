@@ -1,14 +1,20 @@
 import re
 from datetime import datetime, timedelta
-from dateutil import tz
+import pytz
 
-TAIPEI_TZ = tz.gettz("Asia/Taipei")
+TAIPEI_TZ = pytz.timezone("Asia/Taipei")
 
-def parse_command(text: str):
+def parse_ledger_command(text: str):
     """
-    支援：
-    - 記帳：品項 金額 類別(可選)   e.g. 午餐 120 餐飲 / 咖啡 60
-    - 查詢：查今天 / 查昨天 / 查本月 / 查本月 餐飲 / 查 2026-02-01 / 查 2026-02-01 餐飲
+    記帳（新版）：
+      - 類別 金額 商品(可含空白)
+        e.g. 餐飲 120 午餐
+             交通 250 uber 回家
+    查詢：
+      - 查今天 / 查昨天 / 查本月
+      - 查本月 餐飲
+      - 查 2026-02-01
+      - 查 2026-02-01 餐飲
     """
     t = (text or "").strip()
 
@@ -22,17 +28,18 @@ def parse_command(text: str):
     if m:
         return {"type": "query", "range": m.group(1), "category": m.group(2)}
 
-    # 記帳：品項 金額 類別(可選)
-    m = re.match(r"^(.+?)\s+(-?\d+)(?:\s+(\S+))?$", t)
+    # 記帳：類別 金額 商品(可含空白)
+    m = re.match(r"^(\S+)\s+(\d+)\s+(.+)$", t)
     if m:
-        item = m.group(1).strip()
+        category = m.group(1).strip()
         amount = int(m.group(2))
-        category = (m.group(3) or "其他").strip()
+        item = m.group(3).strip()
         return {"type": "add", "item": item, "amount": amount, "category": category}
 
     return {"type": "unknown"}
 
-def resolve_date_range(range_key: str):
+
+def resolve_ledger_range(range_key: str):
     now = datetime.now(TAIPEI_TZ)
     today = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -52,7 +59,8 @@ def resolve_date_range(range_key: str):
 
     # YYYY-MM-DD
     if re.match(r"^\d{4}-\d{2}-\d{2}$", range_key):
-        start = datetime.fromisoformat(range_key).replace(tzinfo=TAIPEI_TZ)
+        dt = datetime.fromisoformat(range_key)
+        start = TAIPEI_TZ.localize(dt)
         return start, start + timedelta(days=1)
 
     raise ValueError("Unsupported range")

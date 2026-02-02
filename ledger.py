@@ -10,13 +10,36 @@ def parse_ledger_command(text: str):
       - 類別 金額 商品(可含空白)
         e.g. 餐飲 120 午餐
              交通 250 uber 回家
+
     查詢：
       - 查今天 / 查昨天 / 查本月
       - 查本月 餐飲
       - 查 2026-02-01
       - 查 2026-02-01 餐飲
+
+    彙整：
+      - 彙整 今天 / 彙整 昨天 / 彙整 本月
+      - 彙整 2026-02-01
+      - （可選）彙整 本月 餐飲  → 只彙整某類別（回傳總額+筆數）
+
+    說明：
+      - 指令 / help / ?
     """
     t = (text or "").strip()
+
+    # 指令說明
+    if t in ("指令", "help", "HELP", "?"):
+        return {"type": "help"}
+
+    # 彙整：彙整 今天/昨天/本月 (+ 類別可選)
+    m = re.match(r"^彙整\s*(今天|昨天|本月)(?:\s+(\S+))?$", t)
+    if m:
+        return {"type": "summary", "range": m.group(1), "category": m.group(2)}
+
+    # 彙整：彙整 YYYY-MM-DD (+ 類別可選)
+    m = re.match(r"^彙整\s+(\d{4}-\d{2}-\d{2})(?:\s+(\S+))?$", t)
+    if m:
+        return {"type": "summary", "range": m.group(1), "category": m.group(2)}
 
     # 查詢：查今天/昨天/本月 (+ 類別)
     m = re.match(r"^查(今天|昨天|本月)(?:\s+(\S+))?$", t)
@@ -57,7 +80,6 @@ def resolve_ledger_range(range_key: str):
             end = start.replace(month=start.month + 1)
         return start, end
 
-    # YYYY-MM-DD
     if re.match(r"^\d{4}-\d{2}-\d{2}$", range_key):
         dt = datetime.fromisoformat(range_key)
         start = TAIPEI_TZ.localize(dt)

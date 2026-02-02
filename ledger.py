@@ -59,6 +59,11 @@ def parse_ledger_command(text: str):
         item = m.group(3).strip()
         return {"type": "add", "item": item, "amount": amount, "category": category}
 
+    # 存入：存入 金額
+    m = re.match(r"^存入\s+(\d+)$", t)
+    if m:
+        return {"type": "deposit", "amount": int(m.group(1))}
+    
     return {"type": "unknown"}
 
 
@@ -86,3 +91,4 @@ def resolve_ledger_range(range_key: str):
         return start, start + timedelta(days=1)
 
     raise ValueError("Unsupported range")
+

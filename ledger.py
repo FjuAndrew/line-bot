@@ -30,7 +30,9 @@ def parse_ledger_command(text: str):
     # 指令說明
     if t in ("指令", "help", "HELP", "?"):
         return {"type": "help"}
-
+        
+    if t in ("查餘額", "餘額", "查看餘額"):
+        return {"type": "balance"}
     # 彙整：彙整 今天/昨天/本月 (+ 類別可選)
     m = re.match(r"^彙整\s*(今天|昨天|本月)(?:\s+(\S+))?$", t)
     if m:
@@ -63,6 +65,8 @@ def parse_ledger_command(text: str):
     m = re.match(r"^存入\s+(\d+)$", t)
     if m:
         return {"type": "deposit", "amount": int(m.group(1))}
+        
+
     
     return {"type": "unknown"}
 
@@ -91,4 +95,5 @@ def resolve_ledger_range(range_key: str):
         return start, start + timedelta(days=1)
 
     raise ValueError("Unsupported range")
+
 

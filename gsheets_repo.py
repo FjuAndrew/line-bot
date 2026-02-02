@@ -46,6 +46,7 @@ class LedgerRepo:
         self.sh = self.gc.open_by_key(spreadsheet_id)
         self.ws_records = self.sh.worksheet(records_sheet)
         self.ws_groups = self.sh.worksheet(groups_sheet)
+        self.ws_wallet = self.sh.worksheet("wallet")
 
     # ===== groups =====
     def get_group_enabled(self, group_id: str) -> bool:
@@ -166,7 +167,68 @@ class LedgerRepo:
             "by_category": by_cat,
         }
 
+    def get_balance(self, group_id: str) -> int:
+        rows = self.ws_wallet.get_all_records()
+        for idx, r in enumerate(rows, start=2):  # header=1
+            if str(r.get("group_id", "")) == group_id:
+                try:
+                    return int(r.get("balance", 0) or 0)
+                except Exception:
+                    return 0
+        return 0
+
+    def deposit(self, group_id: str, amount: int, actor_user_id: str) -> int:
+        """
+        存入金額，回傳存入後餘額
+        """
+        rows = self.ws_wallet.get_all_records()
+        now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+        # update existing row
+        for idx, r in enumerate(rows, start=2):
+            if str(r.get("group_id", "")) == group_id:
+                cur = int(r.get("balance", 0) or 0)
+                new_balance = cur + int(amount)
+                self.ws_wallet.update(f"B{idx}", new_balance)
+                self.ws_wallet.update(f"C{idx}", now)
+                self.ws_wallet.update(f"D{idx}", actor_user_id)
+                return new_balance
+
+        # insert new row
+        new_balance = int(amount)
+        self.ws_wallet.append_row(
+            [group_id, new_balance, now, actor_user_id],
+            value_input_option="USER_ENTERED",
+        )
+        return new_balance
+
+    def deduct(self, group_id: str, amount: int, actor_user_id: str) -> int:
+        """
+        扣款（記帳時用），回傳扣款後餘額
+        若 wallet 沒有該 group_id，視為 0 再扣（可能變負數）
+        """
+        rows = self.ws_wallet.get_all_records()
+        now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+        for idx, r in enumerate(rows, start=2):
+            if str(r.get("group_id", "")) == group_id:
+                cur = int(r.get("balance", 0) or 0)
+                new_balance = cur - int(amount)
+                self.ws_wallet.update(f"B{idx}", new_balance)
+                self.ws_wallet.update(f"C{idx}", now)
+                self.ws_wallet.update(f"D{idx}", actor_user_id)
+                return new_balance
+
+        # no row -> create with negative
+        new_balance = 0 - int(amount)
+        self.ws_wallet.append_row(
+            [group_id, new_balance, now, actor_user_id],
+            value_input_option="USER_ENTERED",
+        )
+        return new_balance
+
 
 if __name__ == "__main__":
     # 快速自測：確保此檔案可以被 import / 執行，不會縮排錯
     print("gsheets_repo loaded OK")
+

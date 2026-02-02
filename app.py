@@ -197,9 +197,10 @@ def handle_message(event):
                         "   例：存入 5000\n"
                         "3) 記帳：類別 金額 商品\n"
                         "   例：餐飲 120 午餐\n"
-                        "4) 查詢：查今天 / 查昨天 / 查本月 / 查 2026-02-01\n"
+                        "4) 查餘額：查餘額 / 餘額\n"
+                        "5) 查詢：查今天 / 查昨天 / 查本月 / 查 2026-02-01\n"
                         "   例：查本月 餐飲\n"
-                        "5) 彙整：彙整 今天 / 彙整 昨天 / 彙整 本月 / 彙整 2026-02-01\n"
+                        "6) 彙整：彙整 今天 / 彙整 昨天 / 彙整 本月 / 彙整 2026-02-01\n"
                         "   例：彙整 本月\n"
                     )
                     line_bot_api.reply_message(
@@ -209,7 +210,24 @@ def handle_message(event):
                         )
                     )
                     return
-                    
+                    # 2.x 查餘額
+                if cmd["type"] == "balance":
+                    try:
+                        balance = repo.get_balance(group_id)
+                        line_bot_api.reply_message(
+                            ReplyMessageRequest(
+                                reply_token=event.reply_token,
+                                messages=[TextMessage(text=f"目前儲存金餘額：{balance} 元")]
+                            )
+                        )
+                    except Exception as e:
+                        line_bot_api.reply_message(
+                            ReplyMessageRequest(
+                                reply_token=event.reply_token,
+                                messages=[TextMessage(text=f"查詢餘額失敗：{e}")]
+                            )
+                        )
+                    return
                 if cmd["type"] == "deposit":
                     try:
                         new_balance = repo.deposit(

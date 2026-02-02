@@ -207,7 +207,28 @@ def handle_message(event):
                         )
                     )
                     return
-
+                    
+                if cmd["type"] == "deposit":
+                    try:
+                        new_balance = repo.deposit(
+                            group_id=group_id,
+                            amount=cmd["amount"],
+                            actor_user_id=event.source.user_id
+                        )
+                        line_bot_api.reply_message(
+                            ReplyMessageRequest(
+                                reply_token=event.reply_token,
+                                messages=[TextMessage(text=f"已存入 {cmd['amount']} 元\n目前儲存金：{new_balance} 元")]
+                            )
+                        )
+                    except Exception as e:
+                        line_bot_api.reply_message(
+                            ReplyMessageRequest(
+                                reply_token=event.reply_token,
+                                messages=[TextMessage(text=f"存入失敗：{e}")]
+                            )
+                        )
+                    return
                 # 2.2 記帳：類別 金額 商品
                 if cmd["type"] == "add":
                     try:
@@ -222,10 +243,23 @@ def handle_message(event):
                             currency="TWD",
                             ts=ts,
                         )
+
+                        # ✅ 新增：扣儲存金並回覆餘額
+                        balance = repo.deduct(
+                            group_id=group_id,
+                            amount=cmd["amount"],
+                            actor_user_id=event.source.user_id
+                        )
+
                         line_bot_api.reply_message(
                             ReplyMessageRequest(
                                 reply_token=event.reply_token,
-                                messages=[TextMessage(text=f"已記錄：{cmd['category']} {cmd['amount']} {cmd['item']}")],
+                                messages=[TextMessage(
+                                    text=(
+                                        f"已記錄：{cmd['category']} {cmd['amount']} {cmd['item']}\n"
+                                        f"剩餘儲存金：{balance} 元"
+                                    )
+                                )],
                             )
                         )
                     except Exception as e:

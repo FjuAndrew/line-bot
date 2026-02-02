@@ -74,31 +74,29 @@ import urllib.parse
 from DrissionPage import ChromiumPage, ChromiumOptions
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
+from datetime import datetime
 import time
 import re
 import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 
-# ====== 新增：Google Sheets 寫入 ======
-import gspread
-from google.oauth2.service_account import Credentials
-
+# ===== 新增：拆出去的模組 =====
+from ledger import parse_ledger_command, resolve_ledger_range, TAIPEI_TZ
+from gsheets_repo import LedgerRepo
 
 app = Flask(__name__)
 
 channel_secret = os.getenv('LINE_CHANNEL_SECRET')
 channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
 user_id = os.getenv('USER_ID')
+
 configuration = Configuration(access_token=channel_access_token)
 handler = WebhookHandler(channel_secret)
 
-# ====== 你原本的 secret json 檔（保留不動） ======
 SECRET_FILES_PATH = "/etc/secrets"
 JSON_FILE_PATH = os.path.join(SECRET_FILES_PATH, "user_ids.json")
 
 def initialize_json_file():
-    """初始化 Secret JSON 文件（如果不存在則創建）"""
     if not os.path.exists(JSON_FILE_PATH):
         with open(JSON_FILE_PATH, "w") as f:
             json.dump({"user_ids": []}, f)
@@ -107,7 +105,6 @@ def initialize_json_file():
         print(f"JSON file already exists at {JSON_FILE_PATH}")
 
 def add_user_id_to_json(user_id):
-    """添加新的 user_id 到 Secret JSON 文件"""
     initialize_json_file()
     with open(JSON_FILE_PATH, "r") as f:
         data = json.load(f)
@@ -120,167 +117,26 @@ def add_user_id_to_json(user_id):
         json.dump(data, f, indent=4)
 
 def get_all_user_ids():
-    """讀取 Secret JSON 文件中的所有 user_id"""
     initialize_json_file()
     with open(JSON_FILE_PATH, "r") as f:
         data = json.load(f)
     return data["user_ids"]
 
 # =========================================================
-# ✅ 新增：記帳功能設定（Google Sheets）
+# ✅ 記帳 Repo（全域初始化一次，避免每次訊息都重新連 Sheets）
 # =========================================================
-TAIPEI_TZ = pytz.timezone("Asia/Taipei")
-
 LEDGER_SPREADSHEET_ID = os.getenv("LEDGER_SPREADSHEET_ID")
+repo = None
+if LEDGER_SPREADSHEET_ID:
+    repo = LedgerRepo(spreadsheet_id=LEDGER_SPREADSHEET_ID)
+
 ENABLE_TRIGGER = "啟用記帳功能"
-
-GS_SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive",
-]
-
-def ensure_service_account_file(path="service_account.json"):
-    """
-    Render 做法：把整份 service_account.json 內容放在 env: GOOGLE_SERVICE_ACCOUNT_JSON
-    啟動時寫出檔案供 google-auth 使用
-    """
-    if os.path.exists(path):
-        return path
-
-    sa_json = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
-    if not sa_json:
-        raise RuntimeError("Missing env: GOOGLE_SERVICE_ACCOUNT_JSON")
-
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(sa_json)
-    return path
-
-def get_gs_client():
-    if not LEDGER_SPREADSHEET_ID:
-        raise RuntimeError("Missing env: LEDGER_SPREADSHEET_ID")
-    sa_path = ensure_service_account_file()
-    creds = Credentials.from_service_account_file(sa_path, scopes=GS_SCOPES)
-    gc = gspread.authorize(creds)
-    sh = gc.open_by_key(LEDGER_SPREADSHEET_ID)
-    ws_records = sh.worksheet("records")
-    ws_groups = sh.worksheet("groups")
-    return ws_records, ws_groups
-
-def gs_get_group_enabled(group_id: str) -> bool:
-    _, ws_groups = get_gs_client()
-    rows = ws_groups.get_all_records()
-    for r in rows:
-        if str(r.get("group_id", "")) == group_id:
-            v = r.get("enabled", False)
-            if isinstance(v, bool):
-                return v
-            return str(v).strip().upper() == "TRUE"
-    return False
-
-def gs_enable_group(group_id: str, actor_user_id: str):
-    _, ws_groups = get_gs_client()
-    rows = ws_groups.get_all_records()
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-
-    for idx, r in enumerate(rows, start=2):  # header 在第1列
-        if str(r.get("group_id", "")) == group_id:
-            ws_groups.update(f"B{idx}", "TRUE")
-            ws_groups.update(f"D{idx}", actor_user_id)
-            return
-
-    ws_groups.append_row(
-        [group_id, "TRUE", now, actor_user_id, ""],
-        value_input_option="USER_ENTERED"
-    )
-
-def gs_add_record(group_id: str, user_id: str, raw_text: str, item: str, amount: int, category: str):
-    ws_records, _ = get_gs_client()
-    ts = datetime.now(TAIPEI_TZ).strftime("%Y-%m-%d %H:%M:%S")
-    # records 欄位：ts,amount,category,item,currency,user_id,raw_text,group_id
-    ws_records.append_row(
-        [ts, int(amount), category, item, "TWD", user_id, raw_text, group_id],
-        value_input_option="USER_ENTERED"
-    )
-
-def gs_query_records(group_id: str, start_iso: str, end_iso: str, category: str | None = None, limit: int = 50):
-    ws_records, _ = get_gs_client()
-    rows = ws_records.get_all_records()
-    out = []
-    for r in rows:
-        if str(r.get("group_id", "")) != group_id:
-            continue
-        ts = str(r.get("ts", ""))
-        if not (start_iso <= ts < end_iso):
-            continue
-        if category and str(r.get("category", "")) != category:
-            continue
-        out.append(r)
-    out.sort(key=lambda x: str(x.get("ts", "")), reverse=True)
-    return out[:limit]
-
-def parse_ledger_command(text: str):
-    """
-    記帳：
-      - 品項 金額 類別(可選)  e.g. 午餐 120 餐飲 / 咖啡 60
-    查詢：
-      - 查今天 / 查昨天 / 查本月
-      - 查本月 餐飲
-      - 查 2026-02-01
-      - 查 2026-02-01 餐飲
-    """
-    t = (text or "").strip()
-
-    m = re.match(r"^查(今天|昨天|本月)(?:\s+(\S+))?$", t)
-    if m:
-        return {"type": "query", "range": m.group(1), "category": m.group(2)}
-
-    m = re.match(r"^查\s+(\d{4}-\d{2}-\d{2})(?:\s+(\S+))?$", t)
-    if m:
-        return {"type": "query", "range": m.group(1), "category": m.group(2)}
-
-    m = re.match(r"^(.+?)\s+(\d+)(?:\s+(\S+))?$", t)
-    if m:
-        item = m.group(1).strip()
-        amount = int(m.group(2))
-        category = (m.group(3) or "其他").strip()
-        return {"type": "add", "item": item, "amount": amount, "category": category}
-
-    return {"type": "unknown"}
-
-def resolve_ledger_range(range_key: str):
-    now = datetime.now(TAIPEI_TZ)
-    today = now.replace(hour=0, minute=0, second=0, microsecond=0)
-
-    if range_key == "今天":
-        start = today
-        end = today + timedelta(days=1)
-        return start, end
-    if range_key == "昨天":
-        start = today - timedelta(days=1)
-        end = today
-        return start, end
-    if range_key == "本月":
-        start = today.replace(day=1)
-        if start.month == 12:
-            end = start.replace(year=start.year + 1, month=1)
-        else:
-            end = start.replace(month=start.month + 1)
-        return start, end
-
-    # YYYY-MM-DD
-    if re.match(r"^\d{4}-\d{2}-\d{2}$", range_key):
-        start = TAIPEI_TZ.localize(datetime.fromisoformat(range_key))
-        end = start + timedelta(days=1)
-        return start, end
-
-    raise ValueError("Unsupported range")
-
 
 @app.route("/health", methods=['HEAD', 'GET'])
 def health_check():
     timezone = pytz.timezone('Asia/Taipei')
     now = datetime.now(timezone)
-    target_hour = 10  # 指定小时
+    target_hour = 10
     print(now.hour)
 
     if now.hour == target_hour and 10 <= now.minute <= 19:
@@ -301,7 +157,6 @@ def callback():
 
     return 'OK'
 
-
 @handler.add(FollowEvent)
 def handle_follow(event):
     user_id = event.source.user_id
@@ -314,7 +169,6 @@ def handle_follow(event):
                 messages=[TextMessage(text='感謝加入好友')]
             )
         )
-
 
 @app.route('/send_message', methods=['POST', 'GET'])
 def send_message():
@@ -338,7 +192,6 @@ def send_message():
     except LineBotApiError as e:
         return jsonify({'error': f'Failed to send message: {e.status_code} - {e.error.message}'}), 500
 
-
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     with ApiClient(configuration) as api_client:
@@ -351,19 +204,16 @@ def handle_message(event):
             group_id = event.source.group_id
             print(f"Group ID: {group_id}")
 
-        text = event.message.text or ""
+        text = (event.message.text or "").strip()
 
         # =========================================================
-        # ✅ 記帳功能：多群組動態啟用
-        # - 任何群組出現「啟用記帳功能」→ 寫入 groups enabled=TRUE
-        # - enabled 才會處理記帳/查詢
-        # - 不影響你原本其它功能
+        # ✅ 記帳功能：多群組動態啟用（已拆到 repo / ledger 模組）
         # =========================================================
-        if source_type == "group" and group_id:
+        if source_type == "group" and group_id and repo:
             # 1) 觸發啟用
             if ENABLE_TRIGGER in text:
                 try:
-                    gs_enable_group(group_id=group_id, actor_user_id=event.source.user_id)
+                    repo.enable_group(group_id=group_id, actor_user_id=event.source.user_id)
                     line_bot_apiv3.reply_message_with_http_info(
                         ReplyMessageRequest(
                             reply_token=event.reply_token,
@@ -379,33 +229,34 @@ def handle_message(event):
                     )
                 return
 
-            # 2) 已啟用才處理記帳指令（不影響其它聊天功能）
-            enabled = False
+            # 2) gate：已啟用才處理記帳/查詢
             try:
-                enabled = gs_get_group_enabled(group_id)
+                enabled = repo.get_group_enabled(group_id)
             except Exception as e:
-                # Sheets 連線錯誤時先不要讓 bot 全掛
                 print(f"[ledger] get_group_enabled error: {e}")
                 enabled = False
 
             if enabled:
                 cmd = parse_ledger_command(text)
 
-                # 記帳
+                # 記帳：類別 金額 商品
                 if cmd["type"] == "add":
                     try:
-                        gs_add_record(
+                        ts = datetime.now(TAIPEI_TZ).strftime("%Y-%m-%d %H:%M:%S")
+                        repo.add_record(
                             group_id=group_id,
                             user_id=event.source.user_id,
                             raw_text=text,
                             item=cmd["item"],
                             amount=cmd["amount"],
-                            category=cmd["category"]
+                            category=cmd["category"],
+                            currency="TWD",
+                            ts=ts,
                         )
                         line_bot_apiv3.reply_message_with_http_info(
                             ReplyMessageRequest(
                                 reply_token=event.reply_token,
-                                messages=[TextMessage(text=f"已記錄：{cmd['item']} {cmd['amount']} 元（{cmd['category']}）")]
+                                messages=[TextMessage(text=f"已記錄：{cmd['category']} {cmd['amount']} {cmd['item']}")]
                             )
                         )
                     except Exception as e:
@@ -424,20 +275,23 @@ def handle_message(event):
                         start_iso = start_dt.strftime("%Y-%m-%d %H:%M:%S")
                         end_iso = end_dt.strftime("%Y-%m-%d %H:%M:%S")
 
-                        rows = gs_query_records(
+                        rows = repo.query_records(
                             group_id=group_id,
                             start_iso=start_iso,
                             end_iso=end_iso,
                             category=cmd.get("category"),
                             limit=50
                         )
+
                         if not rows:
                             msg = "查無資料"
                         else:
                             total = sum(int(r.get("amount", 0)) for r in rows)
                             head = f"共 {len(rows)} 筆，合計 {total} 元"
-                            lines = [f"- {r.get('ts','')} {r.get('item','')} {r.get('amount','')}（{r.get('category','')}）"
-                                     for r in rows[:10]]
+                            lines = [
+                                f"- {r.get('ts','')} {r.get('category','')} {r.get('amount','')} {r.get('item','')}"
+                                for r in rows[:10]
+                            ]
                             more = "" if len(rows) <= 10 else "\n(僅顯示前 10 筆；可用：查本月 餐飲)"
                             msg = head + "\n" + "\n".join(lines) + more
 
@@ -482,7 +336,6 @@ def handle_message(event):
                 )
             )
 
-
 def choose_food(event):
     with ApiClient(configuration) as api_client:
         line_bot_apiv3 = MessagingApi(api_client)
@@ -515,11 +368,10 @@ def search_exchange(event):
             try:
                 for i in range(0, len(titles), 3):
                     if i < len(titles):
-                        text = titles[i].get_text()
-                        if any(keyword in text for keyword in keywords):
+                        t = titles[i].get_text()
+                        if any(keyword in t for keyword in keywords):
                             for j in range(i, min(i + 3, len(titles))):
                                 exchange.append(titles[j].get_text())
-                                print(f"已加入{titles[j].get_text()}")
                 grouped_data = [exchange[i:i + 3] for i in range(0, len(exchange), 3)]
                 today = datetime.now().strftime('%Y-%m-%d')
                 additional_info = f"今日匯率信息\n日期: {today}\n\n"
@@ -531,7 +383,6 @@ def search_exchange(event):
                 print(f"發生錯誤:{e}")
                 formatted_message = "爬取失敗"
         else:
-            print(f'請求失敗，狀態碼：{response.status_code}')
             formatted_message = "爬取失敗"
 
         line_bot_apiv3.push_message(
@@ -634,9 +485,7 @@ def send_button_template(event):
 def handle_postback(event):
     with ApiClient(configuration) as api_client:
         line_bot_apiv3 = MessagingApi(api_client)
-
         data = event.postback.data
-        user_id = event.source.user_id
         timestamp = event.timestamp
         print(timestamp)
 

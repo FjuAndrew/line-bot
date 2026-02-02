@@ -12,8 +12,10 @@ GS_SCOPES = [
 
 def ensure_service_account_file(path: str = "service_account.json") -> str:
     """
-    Render 建議：把整份 service_account.json 內容放 env: GOOGLE_SERVICE_ACCOUNT_JSON
-    啟動時寫出檔案供 google-auth 使用
+    Render 建議：
+    - 不要把 service_account.json 上傳 GitHub
+    - 把整份 JSON 內容放到環境變數：GOOGLE_SERVICE_ACCOUNT_JSON
+    - 程式啟動時寫出檔案供 google-auth 使用
     """
     if os.path.exists(path):
         return path
@@ -33,9 +35,20 @@ class LedgerRepo:
     Google Sheets:
       - records: ts,amount,category,item,currency,user_id,raw_text,group_id
       - groups : group_id,enabled,created_at,created_by,note
+      - wallet : group_id,balance,updated_at,updated_by
+
+    注意：
+      - records/groups/wallet 的 header(第一列) 必須「唯一且不要有空白」
+      - wallet 若 header 重複，get_all_records() 會直接爆
     """
 
-    def __init__(self, spreadsheet_id: str, records_sheet: str = "records", groups_sheet: str = "groups"):
+    def __init__(
+        self,
+        spreadsheet_id: str,
+        records_sheet: str = "records",
+        groups_sheet: str = "groups",
+        wallet_sheet: str = "wallet",
+    ):
         if not spreadsheet_id:
             raise RuntimeError("Missing spreadsheet_id")
 
@@ -44,15 +57,23 @@ class LedgerRepo:
 
         self.gc = gspread.authorize(creds)
         self.sh = self.gc.open_by_key(spreadsheet_id)
+
         self.ws_records = self.sh.worksheet(records_sheet)
         self.ws_groups = self.sh.worksheet(groups_sheet)
-        self.ws_wallet = self.sh.worksheet("wallet")
 
-    # ===== groups =====
+        # wallet 可能不存在 -> 給出明確錯誤
+        try:
+            self.ws_wallet = self.sh.worksheet(wallet_sheet)
+        except Exception as e:
+            raise RuntimeError(f"Wallet worksheet '{wallet_sheet}' not found. Please create it.") from e
+
+    # =========================
+    # groups
+    # =========================
     def get_group_enabled(self, group_id: str) -> bool:
         rows = self.ws_groups.get_all_records()
         for r in rows:
-            if str(r.get("group_id", "")) == group_id:
+            if str(r.get("group_id", "")) == str(group_id):
                 v = r.get("enabled", False)
                 if isinstance(v, bool):
                     return v
@@ -64,9 +85,10 @@ class LedgerRepo:
         now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
         for idx, r in enumerate(rows, start=2):  # header 在第1列
-            if str(r.get("group_id", "")) == group_id:
-                self.ws_groups.update(f"B{idx}", "TRUE")
-                self.ws_groups.update(f"D{idx}", actor_user_id)
+            if str(r.get("group_id", "")) == str(group_id):
+                # 單格更新用 update_acell 最穩
+                self.ws_groups.update_acell(f"B{idx}", "TRUE")
+                self.ws_groups.update_acell(f"D{idx}", actor_user_id)
                 return
 
         self.ws_groups.append_row(
@@ -74,7 +96,9 @@ class LedgerRepo:
             value_input_option="USER_ENTERED",
         )
 
-    # ===== records =====
+    # =========================
+    # records
+    # =========================
     def add_record(
         self,
         group_id: str,
@@ -84,10 +108,9 @@ class LedgerRepo:
         amount: int,
         category: str,
         currency: str = "TWD",
-        ts: str = None,
+        ts: str | None = None,
     ) -> None:
         if ts is None:
-            # 若呼叫端沒給時間，就用 UTC
             ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
         self.ws_records.append_row(
@@ -100,19 +123,22 @@ class LedgerRepo:
         group_id: str,
         start_iso: str,
         end_iso: str,
-        category: str = None,
+        category: str | None = None,
         limit: int = 50,
-    ):
+    ) -> list[dict]:
         rows = self.ws_records.get_all_records()
         out = []
         for r in rows:
-            if str(r.get("group_id", "")) != group_id:
+            if str(r.get("group_id", "")) != str(group_id):
                 continue
+
             ts = str(r.get("ts", ""))
             if not (start_iso <= ts < end_iso):
                 continue
+
             if category and str(r.get("category", "")) != category:
                 continue
+
             out.append(r)
 
         out.sort(key=lambda x: str(x.get("ts", "")), reverse=True)
@@ -123,22 +149,15 @@ class LedgerRepo:
         group_id: str,
         start_iso: str,
         end_iso: str,
-        category: str = None,
+        category: str | None = None,
     ) -> dict:
-        """
-        回傳：
-          - total_amount
-          - total_count
-          - by_category: {category: {"amount": x, "count": y}}
-        若 category 有給，則只統計該類別（by_category 仍會回傳單一類別）
-        """
         rows = self.ws_records.get_all_records()
         total_amount = 0
         total_count = 0
-        by_cat = {}
+        by_cat: dict[str, dict] = {}
 
         for r in rows:
-            if str(r.get("group_id", "")) != group_id:
+            if str(r.get("group_id", "")) != str(group_id):
                 continue
 
             ts = str(r.get("ts", ""))
@@ -167,39 +186,58 @@ class LedgerRepo:
             "by_category": by_cat,
         }
 
+    # =========================
+    # wallet (儲存金)
+    # =========================
+    def _wallet_find_row(self, group_id: str) -> int | None:
+        """
+        回傳 wallet 表內對應 group_id 的 row index（從 2 開始），找不到回 None
+        用 get_all_values() 避開 header 重複造成 get_all_records() 爆炸
+        """
+        values = self.ws_wallet.get_all_values()  # 2D list
+        if not values:
+            return None
+
+        # values[0] 是 header
+        for i in range(1, len(values)):
+            row = values[i]
+            if len(row) >= 1 and str(row[0]).strip() == str(group_id):
+                return i + 1  # sheet row index (1-based)
+        return None
+
     def get_balance(self, group_id: str) -> int:
-        rows = self.ws_wallet.get_all_records()
-        for idx, r in enumerate(rows, start=2):  # header=1
-            if str(r.get("group_id", "")) == group_id:
-                try:
-                    return int(r.get("balance", 0) or 0)
-                except Exception:
-                    return 0
-        return 0
+        row_idx = self._wallet_find_row(group_id)
+        if row_idx is None:
+            return 0
+
+        v = self.ws_wallet.acell(f"B{row_idx}").value
+        try:
+            return int(v or 0)
+        except Exception:
+            return 0
 
     def deposit(self, group_id: str, amount: int, actor_user_id: str) -> int:
         """
         存入金額，回傳存入後餘額
         """
-        rows = self.ws_wallet.get_all_records()
         now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        row_idx = self._wallet_find_row(group_id)
 
-        # update existing row
-        for idx, r in enumerate(rows, start=2):
-            if str(r.get("group_id", "")) == group_id:
-                cur = int(r.get("balance", 0) or 0)
-                new_balance = cur + int(amount)
-                self.ws_wallet.update(f"B{idx}", new_balance)
-                self.ws_wallet.update(f"C{idx}", now)
-                self.ws_wallet.update(f"D{idx}", actor_user_id)
-                return new_balance
+        if row_idx is None:
+            new_balance = int(amount)
+            self.ws_wallet.append_row(
+                [group_id, new_balance, now, actor_user_id],
+                value_input_option="USER_ENTERED",
+            )
+            return new_balance
 
-        # insert new row
-        new_balance = int(amount)
-        self.ws_wallet.append_row(
-            [group_id, new_balance, now, actor_user_id],
-            value_input_option="USER_ENTERED",
-        )
+        cur = self.get_balance(group_id)
+        new_balance = cur + int(amount)
+
+        # 單格更新用 update_acell（避免 update() 400 "B2"）
+        self.ws_wallet.update_acell(f"B{row_idx}", str(new_balance))
+        self.ws_wallet.update_acell(f"C{row_idx}", now)
+        self.ws_wallet.update_acell(f"D{row_idx}", actor_user_id)
         return new_balance
 
     def deduct(self, group_id: str, amount: int, actor_user_id: str) -> int:
@@ -207,28 +245,25 @@ class LedgerRepo:
         扣款（記帳時用），回傳扣款後餘額
         若 wallet 沒有該 group_id，視為 0 再扣（可能變負數）
         """
-        rows = self.ws_wallet.get_all_records()
         now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        row_idx = self._wallet_find_row(group_id)
 
-        for idx, r in enumerate(rows, start=2):
-            if str(r.get("group_id", "")) == group_id:
-                cur = int(r.get("balance", 0) or 0)
-                new_balance = cur - int(amount)
-                self.ws_wallet.update(f"B{idx}", new_balance)
-                self.ws_wallet.update(f"C{idx}", now)
-                self.ws_wallet.update(f"D{idx}", actor_user_id)
-                return new_balance
+        if row_idx is None:
+            new_balance = 0 - int(amount)
+            self.ws_wallet.append_row(
+                [group_id, new_balance, now, actor_user_id],
+                value_input_option="USER_ENTERED",
+            )
+            return new_balance
 
-        # no row -> create with negative
-        new_balance = 0 - int(amount)
-        self.ws_wallet.append_row(
-            [group_id, new_balance, now, actor_user_id],
-            value_input_option="USER_ENTERED",
-        )
+        cur = self.get_balance(group_id)
+        new_balance = cur - int(amount)
+
+        self.ws_wallet.update_acell(f"B{row_idx}", str(new_balance))
+        self.ws_wallet.update_acell(f"C{row_idx}", now)
+        self.ws_wallet.update_acell(f"D{row_idx}", actor_user_id)
         return new_balance
 
 
 if __name__ == "__main__":
-    # 快速自測：確保此檔案可以被 import / 執行，不會縮排錯
     print("gsheets_repo loaded OK")
-
